@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AP Market Price Dashboard | CauliVision</title>
+  <link rel="stylesheet" href="/static/style.css?v=20261006" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">AICW · CauliVision</div>
+    <div class="nav-links">
+      <a href="/" data-i18n="Home">Home</a>
+      <a href="/analyze" data-i18n="Disease Prediction and Quality Prediction">Disease Prediction and Quality Prediction</a>
+      <a class="active" href="/market" data-i18n="Market prices">Market prices</a>
+      <label class="language-control"><span data-i18n="Language">Language</span>
+        <select class="language-select" aria-label="Language">
+          <option value="en">English</option>
+          <option value="te">తెలుగు</option>
+        </select>
+      </label>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1 data-i18n="Andhra Pradesh cauliflower market prices">Andhra Pradesh cauliflower market prices</h1>
+      <p data-i18n="Track district and market trends to decide where your produce can get the best price.">Track district and market trends to decide where your produce can get the best price.</p>
+    </section>
+
+    <section class="card market-controls">
+      <label>
+        <span data-i18n="Select district">Select district</span>
+        <select id="districtSelect" aria-label="Select district"></select>
+      </label>
+      <div id="marketSource" class="muted small-note" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="marketResults" class="market-results"></section>
+  </main>
+
+  <script src="/static/language.js"></script>
+  <script>
+    const districtSelect = document.getElementById('districtSelect');
+    const marketResults = document.getElementById('marketResults');
+    const marketSource = document.getElementById('marketSource');
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[character]);
+    }
+
+    function translate(value) {
+      return window.translateAppText(value);
+    }
+
+    function formatPrice(value) {
+      return value == null ? '—' : '₹' + Number(value).toFixed(2) + '/kg';
+    }
+
+    function renderTrendChart(prices) {
+      if (!prices || prices.length < 2) {
+        return `<div class="muted">${translate('Historical price trend is not available from the feed.')}</div>`;
+      }
+      const max = Math.max(...prices.map((item) => item.price));
+      const min = Math.min(...prices.map((item) => item.price));
+      const points = prices.map((item, index) => {
+        const x = (index / (prices.length - 1)) * 100;
+        const y = 100 - ((item.price - min) / (max - min || 1)) * 80 - 10;
+        return `${x},${y}`;
+      }).join(' ');
+      return `
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="trend-chart" aria-label="Price trend chart">
+          <polyline fill="none" stroke="#a7d8ba" stroke-width="3" points="${points}" />
+        </svg>
+      `;
+    }
+
+    async function loadMarketData(district = 'All') {
+      marketResults.innerHTML = `<div class="card"><p class="muted">${translate('Loading market prices...')}</p></div>`;
+      const params = district && district !== 'All' ? `?district=${encodeURIComponent(district)}` : '';
+      let payload;
+      try {
+        const response = await fetch(`/api/market-data${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        payload = await response.json();
+      } catch (error) {
+        marketSource.textContent = translate('Could not load market prices. Please try again.');
+        marketResults.innerHTML = `<div class="card"><p class="muted">${translate('Could not load market prices. Please try again.')}</p></div>`;
+        return;
+      }
+
+      if (payload.source === 'data.gov.in') {
+        marketSource.textContent = `${translate('Official data.gov.in (AGMARKNET)')} · ${translate('Fetched')}: ${escapeHtml(payload.last_updated)}`;
+      } else {
+        marketSource.textContent = translate('Reference prices only — not live mandi data.');
+        if (payload.warning) {
+          marketSource.textContent += ` ${translate('Live feed warning:')} ${escapeHtml(payload.warning)}`;
+        } else {
+          marketSource.textContent += ` ${translate('Configure DATA_GOV_IN_API_KEY for official daily prices.')}`;
+        }
+      }
+      const markets = payload.markets || [];
+
+      if (!markets.length) {
+        marketResults.innerHTML = `<div class="card"><p class="muted">${translate('No market data found for this district.')}</p></div>`;
+        return;
+      }
+
+      const cards = markets.map((market) => {
+        const change = market.recent_prices.length ? market.recent_prices[market.recent_prices.length - 1].price - market.recent_prices[0].price : 0;
+        const trendClass = change >= 0 ? 'up' : 'down';
+        return `
+          <article class="card market-card">
+            <div class="market-header">
+              <div>
+                <h3>${escapeHtml(market.mandi_name)}</h3>
+                <p class="muted">${escapeHtml(translate(market.district))}${market.region ? ` · ${escapeHtml(translate(market.region))}` : ''}</p>
+              </div>
+              ${market.recent_prices.length > 1 ? `<span class="trend ${trendClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}</span>` : ''}
+            </div>
+            <div class="market-metrics">
+              <div><span>${translate('Average')}</span><strong>${formatPrice(market.modal_price)}</strong></div>
+              <div><span>${translate('Min')}</span><strong>${formatPrice(market.min_price)}</strong></div>
+              <div><span>${translate('Max')}</span><strong>${formatPrice(market.max_price)}</strong></div>
+            </div>
+            <div class="market-meta">
+              ${market.market_type ? `<p><strong>${translate('Type:')}</strong> ${escapeHtml(translate(market.market_type))}</p>` : ''}
+              ${market.arrival_date ? `<p><strong>${translate('Arrival date:')}</strong> ${escapeHtml(market.arrival_date)}</p>` : ''}
+              ${market.peak_months ? `<p><strong>${translate('Peak:')}</strong> ${escapeHtml(translate(market.peak_months))}</p>` : ''}
+              ${market.cauliflower_production ? `<p><strong>${translate('Production:')}</strong> ${escapeHtml(translate(market.cauliflower_production))}</p>` : ''}
+            </div>
+            <div class="chart-wrap">
+              ${renderTrendChart(market.recent_prices)}
+              <div class="chart-labels">
+                ${market.recent_prices.map((item) => `<span>${escapeHtml(new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }))}</span>`).join('')}
+              </div>
+            </div>
+            <form class="price-prediction-form" data-district="${escapeHtml(market.district)}" data-mandi="${escapeHtml(market.mandi_name)}">
+              <label>
+                <span>${translate('Quantity to sell (kg)')}</span>
+                <input name="quantity_kg" type="number" min="1" max="100000" step="1" value="500" required />
+              </label>
+              <button type="submit">${translate('Predict selling price')}</button>
+              <p class="price-prediction-result muted" aria-live="polite"></p>
+            </form>
+            <p class="market-note">${escapeHtml(translate(market.notes))}</p>
+          </article>
+        `;
+      }).join('');
+
+      marketResults.innerHTML = cards;
+    }
+
+    marketResults.addEventListener('submit', async (event) => {
+      const form = event.target.closest('.price-prediction-form');
+      if (!form) return;
+      event.preventDefault();
+      const result = form.querySelector('.price-prediction-result');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const quantity = Number(new FormData(form).get('quantity_kg'));
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100000) {
+        result.textContent = translate('Enter a quantity from 1 to 100000 kg.');
+        return;
+      }
+
+      submitButton.disabled = true;
+      result.textContent = translate('Calculating dataset-based estimate...');
+      const params = new URLSearchParams({
+        district: form.dataset.district,
+        mandi_name: form.dataset.mandi,
+        quantity_kg: String(quantity)
+      });
+      try {
+        const response = await fetch(`/api/predict-market-price?${params}`);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'Price prediction failed.');
+        result.innerHTML = `<strong>${translate('Predicted selling price')}: ${formatPrice(payload.predicted_price_rs_per_kg)}</strong><br>${translate('Estimated total')}: ₹${Number(payload.estimated_total_rs).toFixed(2)}<br><span>${translate('Model estimate based on your project dataset; not a guaranteed market price.')}</span>`;
+      } catch (error) {
+        result.textContent = translate('Could not calculate a price estimate. Please try again.');
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    async function populateDistricts() {
+      const response = await fetch('/api/market-data');
+      const payload = await response.json();
+      const districts = payload.districts || [...new Set((payload.markets || []).map((m) => m.district))].sort();
+      const allOption = `<option value="All">${translate('All districts')}</option>`;
+      const districtOptions = districts.map((district) => `<option value="${escapeHtml(district)}">${escapeHtml(translate(district))}</option>`).join('');
+      districtSelect.innerHTML = allOption + districtOptions;
+      districtSelect.value = 'All';
+      districtSelect.addEventListener('change', () => loadMarketData(districtSelect.value));
+      loadMarketData('All');
+    }
+
+    window.addEventListener('app-language-change', () => {
+      if (districtSelect.options.length) {
+        const selectedDistrict = districtSelect.value;
+        const selectedText = districtSelect.options[districtSelect.selectedIndex]?.textContent;
+        districtSelect.options[0].textContent = translate('All districts');
+        for (const option of [...districtSelect.options].slice(1)) {
+          option.textContent = translate(option.value);
+        }
+        if (selectedDistrict && selectedText) districtSelect.value = selectedDistrict;
+        loadMarketData(districtSelect.value);
+      }
+    });
+    populateDistricts().catch(() => {
+      marketSource.textContent = translate('Could not load market prices. Please try again.');
+      marketResults.innerHTML = `<div class="card"><p class="muted">${translate('Could not load market prices. Please try again.')}</p></div>`;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Disease Prediction and Quality Prediction | CauliVision</title>
+  <link rel="stylesheet" href="/static/style.css?v=20261006-neat-logos" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">AICW · CauliVision</div>
+    <div class="nav-links">
+      <a href="/" data-i18n="Home">Home</a>
+      <a class="active" href="/analyze" data-i18n="Disease Prediction and Quality Prediction">Disease Prediction and Quality Prediction</a>
+      <a href="/market" data-i18n="Market prices">Market prices</a>
+      <label class="language-control"><span data-i18n="Language">Language</span>
+        <select class="language-select" aria-label="Language">
+          <option value="en">English</option>
+          <option value="te">తెలుగు</option>
+        </select>
+      </label>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <h1 data-i18n="Disease Prediction and Quality Prediction">Disease Prediction and Quality Prediction</h1>
+    <p class="muted" data-i18n="Upload a cauliflower image or scan it with your camera in either panel, then run that panel's prediction.">Upload a cauliflower image or scan it with your camera in either panel, then run that panel's prediction.</p>
+
+    <section class="card field-area-control">
+      <label for="fieldAreaSelect" data-i18n="Field area">Field area</label>
+      <select id="fieldAreaSelect">
+        <option value="" data-i18n="Select field area">Select field area</option>
+        <option value="0.25" data-i18n="0.25 acre">0.25 acre</option>
+        <option value="0.5" data-i18n="0.5 acre">0.5 acre</option>
+        <option value="1" data-i18n="1 acre">1 acre</option>
+        <option value="2" data-i18n="2 acres">2 acres</option>
+        <option value="3" data-i18n="3 acres">3 acres</option>
+        <option value="5" data-i18n="5 acres">5 acres</option>
+        <option value="10" data-i18n="10 acres">10 acres</option>
+      </select>
+      <label for="sprayWaterPerAcre" data-i18n="Spray water per acre (litres)">Spray water per acre (litres)</label>
+      <input id="sprayWaterPerAcre" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="e.g. 200" data-i18n-placeholder="e.g. 200" />
+      <span class="muted" data-i18n="Enter the water volume you actually use per acre. This calculates product amounts only; follow the pesticide label and local agriculture officer.">Enter the water volume you actually use per acre. This calculates product amounts only; follow the pesticide label and local agriculture officer.</span>
+    </section>
+
+    <div class="split prediction-panels">
+      <section class="card disease prediction-panel" data-kind="disease">
+        <h2 data-i18n="Disease Prediction">Disease Prediction</h2>
+        <p class="muted" data-i18n="Upload an image or use the live camera to predict a disease label.">Upload an image or use the live camera to predict a disease label.</p>
+        <label class="filebtn"><span data-i18n="Upload image">Upload image</span>
+          <input class="image-input" type="file" accept="image/*" hidden />
+        </label>
+        <div class="inputs">
+          <button type="button" class="camera-start" data-i18n="Scan with camera">Scan with camera</button>
+          <button type="button" class="camera-capture ghost hidden" data-i18n="Capture &amp; scan">Capture &amp; scan</button>
+          <button type="button" class="camera-stop ghost hidden" data-i18n="Stop camera">Stop camera</button>
+        </div>
+        <video class="camera-video hidden" autoplay playsinline></video>
+        <img class="preview hidden" alt="Image for disease prediction" data-i18n-alt="Image for disease prediction" />
+        <button type="button" class="predict-button" disabled data-i18n="Predict disease">Predict disease</button>
+        <p class="status muted" aria-live="polite"></p>
+        <p class="error err" role="alert"></p>
+        <div class="result hidden" aria-live="polite">
+          <p class="muted" data-i18n="Predicted disease">Predicted disease</p>
+          <p class="result-name big"></p>
+          <p class="result-detail muted"></p>
+          <p class="field-area-result muted"></p>
+        </div>
+      </section>
+
+      <section class="card quality prediction-panel" data-kind="quality">
+        <h2 data-i18n="Quality Prediction">Quality Prediction</h2>
+        <p class="muted" data-i18n="Upload an image or use the live camera to predict a quality grade.">Upload an image or use the live camera to predict a quality grade.</p>
+        <label class="filebtn"><span data-i18n="Upload image">Upload image</span>
+          <input class="image-input" type="file" accept="image/*" hidden />
+        </label>
+        <div class="inputs">
+          <button type="button" class="camera-start" data-i18n="Scan with camera">Scan with camera</button>
+          <button type="button" class="camera-capture ghost hidden" data-i18n="Capture &amp; scan">Capture &amp; scan</button>
+          <button type="button" class="camera-stop ghost hidden" data-i18n="Stop camera">Stop camera</button>
+        </div>
+        <video class="camera-video hidden" autoplay playsinline></video>
+        <img class="preview hidden" alt="Image for quality prediction" data-i18n-alt="Image for quality prediction" />
+        <button type="button" class="predict-button" disabled data-i18n="Predict quality">Predict quality</button>
+        <p class="status muted" aria-live="polite"></p>
+        <p class="error err" role="alert"></p>
+        <div class="result hidden" aria-live="polite">
+          <p class="muted" data-i18n="Predicted condition">Predicted condition</p>
+          <p class="result-name big"></p>
+          <p class="result-detail muted"></p>
+          <p class="grade-detail muted"></p>
+          <p class="field-area-result muted"></p>
+        </div>
+      </section>
+    </div>
+
+    <section class="card advice-panel hidden" aria-live="polite">
+      <h2 data-i18n="Agronomy advice">Agronomy advice</h2>
+      <div class="advice-grid">
+        <div>
+          <h3 data-i18n="Precautions">Precautions</h3>
+          <ul class="advice-list" data-list="precautions"></ul>
+        </div>
+        <div>
+          <h3 data-i18n="Measures">Measures</h3>
+          <ul class="advice-list" data-list="measures"></ul>
+        </div>
+        <div>
+          <h3 data-i18n="Black soil guidance">Black soil guidance</h3>
+          <ul class="advice-list" data-list="black_soil"></ul>
+        </div>
+        <div>
+          <h3 data-i18n="Pesticides">Pesticides</h3>
+          <ul class="advice-list pesticide-list" data-list="pesticides"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <p class="confidence-note" data-i18n="Model scores are estimates from the project data and have not been independently validated on field-collected photos.">Model scores are estimates from the project data and have not been independently validated on field-collected photos.</p>
+  <script src="/static/language.js"></script>
+  <script>
+    const fieldAreaSelect = document.getElementById("fieldAreaSelect");
+    const sprayWaterInput = document.getElementById("sprayWaterPerAcre");
+    function selectedAreaText() {
+      if (!fieldAreaSelect.value) return "";
+      return `${window.translateAppText("Field area")}: ${fieldAreaSelect.value} ${window.translateAppText(Number(fieldAreaSelect.value) === 1 ? "acre" : "acres")}`;
+    }
+
+    function formatDoseValue(value, unit) {
+      const rounded = Number(value.toFixed(2));
+      if (unit === "g" && rounded >= 1000) return `${Number((rounded / 1000).toFixed(2))} kg`;
+      if (unit === "ml" && rounded >= 1000) return `${Number((rounded / 1000).toFixed(2))} L`;
+      return `${rounded} ${unit}`;
+    }
+
+    function pesticideAmountEstimate(dose) {
+      const area = Number(fieldAreaSelect.value);
+      const waterPerAcre = Number(sprayWaterInput.value);
+      if (!Number.isFinite(area) || area <= 0) {
+        return window.translateAppText("Select field area to calculate pesticide amount.");
+      }
+
+      const range = "(\\d+(?:\\.\\d+)?)\\s*(?:[-–]\\s*(\\d+(?:\\.\\d+)?))?";
+      const liquidOrMassUnit = "(kg|g|ml|l|litres?|liters?)";
+      const perLitre = new RegExp(`${range}\\s*${liquidOrMassUnit}\\b[^.;]*?(?:per|/)\\s*(?:litre|liter|l)\\b`, "i");
+      const perAcre = new RegExp(`${range}\\s*${liquidOrMassUnit}\\b[^.;]*?(?:per|/)\\s*acre\\b`, "i");
+      const trapsPerAcre = new RegExp(`${range}\\s*(traps?)\\s*(?:per|/)\\s*acre\\b`, "i");
+      const litreMatch = String(dose || "").match(perLitre);
+      if (litreMatch) {
+        if (!Number.isFinite(waterPerAcre) || waterPerAcre <= 0 || waterPerAcre > 10000) {
+          return window.translateAppText("Enter the spray water litres used per acre to calculate this amount.");
+        }
+        const sourceUnit = litreMatch[3].toLowerCase();
+        const unit = sourceUnit === "ml" ? "ml" : sourceUnit === "g" ? "g" : sourceUnit === "kg" ? "kg" : "L";
+        const low = Number(litreMatch[1]) * waterPerAcre * area;
+        const high = Number(litreMatch[2] || litreMatch[1]) * waterPerAcre * area;
+        const lowText = formatDoseValue(low, unit);
+        const highText = formatDoseValue(high, unit);
+        const productAmount = lowText === highText ? lowText : `${lowText}–${highText}`;
+        return `${window.translateAppText("Estimated product for selected area")}: ${productAmount}`;
+      }
+
+      const trapsMatch = String(dose || "").match(trapsPerAcre);
+      if (trapsMatch) {
+        const low = Number(trapsMatch[1]) * area;
+        const high = Number(trapsMatch[2] || trapsMatch[1]) * area;
+        const amount = low === high ? `${low}` : `${low}–${high}`;
+        return `${window.translateAppText("Estimated for selected area")}: ${amount} ${window.translateAppText("traps")}`;
+      }
+
+      const acreMatch = String(dose || "").match(perAcre);
+      if (acreMatch) {
+        const unit = acreMatch[3].toLowerCase().startsWith("l") ? "L" : acreMatch[3].toLowerCase();
+        const low = Number(acreMatch[1]) * area;
+        const high = Number(acreMatch[2] || acreMatch[1]) * area;
+        const lowText = formatDoseValue(low, unit);
+        const highText = formatDoseValue(high, unit);
+        const amount = lowText === highText ? lowText : `${lowText}–${highText}`;
+        return `${window.translateAppText("Estimated for selected area")}: ${amount}`;
+      }
+
+      return window.translateAppText("Dose is not in a supported unit; follow the product label.");
+    }
+
+    function updateAreaResults() {
+      document.querySelectorAll(".field-area-result").forEach((element) => {
+        element.textContent = selectedAreaText();
+      });
+      for (const panel of document.querySelectorAll(".prediction-panel")) {
+        if (panel.lastAdvice) panel.renderAdvice(panel.lastAdvice);
+      }
+    }
+    fieldAreaSelect.addEventListener("change", updateAreaResults);
+    sprayWaterInput.addEventListener("input", updateAreaResults);
+
+    for (const panel of document.querySelectorAll(".prediction-panel")) {
+      const kind = panel.dataset.kind;
+      const fileInput = panel.querySelector(".image-input");
+      const video = panel.querySelector(".camera-video");
+      const preview = panel.querySelector(".preview");
+      const startButton = panel.querySelector(".camera-start");
+      const captureButton = panel.querySelector(".camera-capture");
+      const stopButton = panel.querySelector(".camera-stop");
+      const predictButton = panel.querySelector(".predict-button");
+      const status = panel.querySelector(".status");
+      const error = panel.querySelector(".error");
+      const result = panel.querySelector(".result");
+      const advicePanel = document.querySelector(".advice-panel");
+      let selectedFile = null;
+      let cameraStream = null;
+      let lastPrediction = null;
+      let lastAdvice = null;
+      let lastFilename = "";
+      let statusMessage = "";
+
+      function stopCamera() {
+        if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+        video.srcObject = null;
+        video.classList.add("hidden");
+        captureButton.classList.add("hidden");
+        stopButton.classList.add("hidden");
+        startButton.classList.remove("hidden");
+      }
+
+      function selectImage(file) {
+        selectedFile = file;
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("hidden");
+        predictButton.disabled = false;
+        error.textContent = "";
+        statusMessage = window.translateAppText("Image ready. Select Predict to see the result.");
+        status.textContent = statusMessage;
+        result.classList.add("hidden");
+      }
+
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        error.textContent = "";
+        statusMessage = window.translateAppText("Verifying cauliflower photo...");
+        status.textContent = statusMessage;
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+          const resp = await fetch("/api/validate-cauliflower", { method: "POST", body: formData });
+          const data = await resp.json();
+          if (!resp.ok || !data.is_cauliflower) {
+            const msg = data.reason || data.error || "No cauliflower detected. Only cauliflower photos are accepted.";
+            error.textContent = window.translateAppText(msg);
+            status.textContent = "";
+            fileInput.value = "";
+            selectedFile = null;
+            preview.classList.add("hidden");
+            predictButton.disabled = true;
+            return;
+          }
+          selectImage(file);
+          statusMessage = window.translateAppText("✓ Valid cauliflower detected. Ready for prediction.");
+        } catch (err) {
+          error.textContent = window.translateAppText("Verification failed. Please try again.");
+          status.textContent = "";
+          fileInput.value = "";
+          selectedFile = null;
+          preview.classList.add("hidden");
+          predictButton.disabled = true;
+        }
+      });
+
+      startButton.addEventListener("click", async () => {
+        error.textContent = "";
+
+        if (location.protocol === "file:") {
+          error.textContent = window.translateAppText("Camera access works only when this page is opened from http://127.0.0.1:5000 or localhost. Open the app in the browser and allow camera permission.");
+          return;
+        }
+
+        if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          error.textContent = window.translateAppText("Camera access is unavailable. Open this page on localhost/HTTPS, then allow camera permission or use image upload.");
+          return;
+        }
+
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          });
+          video.srcObject = cameraStream;
+          video.classList.remove("hidden");
+          captureButton.classList.remove("hidden");
+          stopButton.classList.remove("hidden");
+          startButton.classList.add("hidden");
+        } catch (cause) {
+          if (cause.name === "NotAllowedError" || cause.name === "PermissionDeniedError") {
+            error.textContent = window.translateAppText("Camera permission is blocked. Allow camera access for this site in your browser settings, then reload the page.");
+          } else {
+            error.textContent = window.translateAppText("Camera could not be opened") + ": " + (cause.message || cause.name || window.translateAppText("check browser permissions"));
+          }
+        }
+      });
+
+      captureButton.addEventListener("click", () => {
+        if (!video.videoWidth || !video.videoHeight) {
+          error.textContent = window.translateAppText("Camera is not ready yet. Please wait and try again.");
+          return;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          error.textContent = window.translateAppText("Could not capture an image from the camera.");
+          return;
+        }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        captureButton.disabled = true;
+        error.textContent = "";
+        statusMessage = window.translateAppText("Verifying cauliflower photo...");
+        status.textContent = statusMessage;
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            captureButton.disabled = false;
+            error.textContent = window.translateAppText("Could not capture an image from the camera.");
+            status.textContent = "";
+            return;
+          }
+          const capturedFile = new File([blob], `${kind}_camera_scan.jpg`, { type: "image/jpeg" });
+          const formData = new FormData();
+          formData.append("file", capturedFile);
+          try {
+            const resp = await fetch("/api/validate-cauliflower", { method: "POST", body: formData });
+            const data = await resp.json();
+            if (!resp.ok || !data.is_cauliflower) {
+              const msg = data.reason || data.error || "No cauliflower detected. Only cauliflower photos are accepted.";
+              error.textContent = window.translateAppText(msg);
+              status.textContent = "";
+              captureButton.disabled = false;
+              predictButton.disabled = true;
+              result.classList.add("hidden");
+              advicePanel.classList.add("hidden");
+              // Keep camera active so user can aim at a real cauliflower and recapture!
+              return;
+            }
+            selectImage(capturedFile);
+            stopCamera();
+            statusMessage = window.translateAppText("✓ Valid cauliflower detected. Ready for prediction.");
+            status.textContent = statusMessage;
+          } catch (err) {
+            error.textContent = window.translateAppText("Verification failed. Please try again.");
+            status.textContent = "";
+            captureButton.disabled = false;
+            predictButton.disabled = true;
+          } finally {
+            captureButton.disabled = false;
+          }
+        }, "image/jpeg", 0.92);
+      });
+
+      stopButton.addEventListener("click", stopCamera);
+
+      predictButton.addEventListener("click", async () => {
+        if (!selectedFile) return;
+        error.textContent = "";
+        statusMessage = window.translateAppText(kind === "disease" ? "Predicting disease..." : "Predicting quality...");
+        status.textContent = statusMessage;
+        predictButton.disabled = true;
+        const formData = new FormData();
+        formData.append("file", selectedFile, selectedFile.name);
+        try {
+          const response = await fetch("/api/analyze", { method: "POST", body: formData });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(window.translateAppText(data.error || data.detail || "Prediction failed."));
+          lastPrediction = data;
+          lastAdvice = data.advice;
+          lastFilename = data.filename;
+          renderPrediction();
+          renderAdvice(data.advice);
+          result.classList.remove("hidden");
+          advicePanel.classList.remove("hidden");
+          statusMessage = `${window.translateAppText("Prediction complete")}: ${lastFilename}`;
+          status.textContent = statusMessage;
+        } catch (cause) {
+          error.textContent = cause.message;
+          status.textContent = "";
+          advicePanel.classList.add("hidden");
+        } finally {
+          predictButton.disabled = false;
+        }
+      });
+
+      function renderAdvice(advice) {
+        if (!advice) {
+          advicePanel.classList.add("hidden");
+          return;
+        }
+
+        const listKeys = ["precautions", "measures", "black_soil", "pesticides"];
+        for (const key of listKeys) {
+          const list = advicePanel.querySelector(`[data-list="${key}"]`);
+          if (!list) continue;
+          const items = advice[key] || [];
+          if (key === "pesticides") {
+            list.innerHTML = items.map((item) => {
+              const name = window.translateAdviceText(item.name || "Pesticide");
+              const useFor = window.translateAdviceText(item.use_for || item.useFor || "");
+              const dose = window.translateAdviceText(item.dose || "");
+              const amount = pesticideAmountEstimate(item.dose || "");
+              return `<li><strong>${name}</strong><br><span>${useFor}</span><br><small>${dose}</small><br><small class="dose-estimate">${amount}</small></li>`;
+            }).join("") || `<li>${window.translateAppText("No pesticide recommendation available.")}</li>`;
+          } else {
+            list.innerHTML = items.map((item) => `<li>${window.translateAdviceText(item)}</li>`).join("") || `<li>${window.translateAppText("No recommendation available.")}</li>`;
+          }
+        }
+        panel.lastAdvice = advice;
+        panel.renderAdvice = renderAdvice;
+      }
+
+      function renderPrediction() {
+        const prediction = kind === "disease" ? lastPrediction.disease : lastPrediction.quality;
+        result.querySelector(".field-area-result").textContent = selectedAreaText();
+        if (kind === "disease") {
+          result.querySelector(".result-name").textContent =
+            window.translateAppText(prediction.name);
+          result.querySelector(".result-detail").textContent =
+            `${window.translateAppText("Model confidence estimate")}: ${prediction.confidence}%`;
+          return;
+        }
+        result.querySelector(".result-name").textContent =
+          window.translateAppText(prediction.condition);
+        result.querySelector(".result-detail").textContent =
+          `${window.translateAppText("Condition confidence estimate")}: ${prediction.condition_confidence}%`;
+        result.querySelector(".grade-detail").textContent =
+          `${window.translateAppText("Quality grade")}: ${window.translateAppText(prediction.grade)} · ` +
+          `${window.translateAppText("Grade confidence estimate")}: ${prediction.confidence}%`;
+      }
+
+      window.addEventListener("app-language-change", () => {
+        if (selectedFile && result.classList.contains("hidden")) {
+          statusMessage = window.translateAppText("Image ready. Select Predict to see the result.");
+          status.textContent = statusMessage;
+        }
+        if (lastPrediction) {
+          renderPrediction();
+          if (lastAdvice) {
+            renderAdvice(lastAdvice);
+          }
+          statusMessage = `${window.translateAppText("Prediction complete")}: ${lastFilename}`;
+          status.textContent = statusMessage;
+        }
+      });
+
+      window.addEventListener("pagehide", stopCamera);
+    }
+  </script>
+</body>
+</html>

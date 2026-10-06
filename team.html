@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Team · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Team members</h1>
+  <p>{{ app_name }} is built by this three-member student team.</p>
+</section>
+<section class="grid-3">
+  {% for m in team %}
+  <article class="card person">
+    <div class="avatar">{{ loop.index }}</div>
+    <h2>{{ m.name }}</h2>
+    <p>{{ m.role }}</p>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
